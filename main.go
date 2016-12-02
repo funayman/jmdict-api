@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/funayman/jadict-core/parser"
+	"github.com/funayman/jmdict-api/parser"
 )
 
 func main() {
