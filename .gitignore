@@ -22,3 +22,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+#project
+data/*.xml
+data/JMdict_e
