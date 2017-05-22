@@ -27,3 +27,4 @@ _testmain.go
 data/*.xml
 data/JMdict_e
 data/JMdict
+data/edict2u
