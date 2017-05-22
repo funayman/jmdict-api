@@ -121,7 +121,7 @@ type Kanji struct {
 /***************** ****************************************************
 * Local Structs
 *	Needed due to an issue with empty parent tags when marshaling XML
-* Github issue -- [issueNumber]
+* Github issue -- [https://github.com/golang/go/issues/7233]
 **********************************************************************/
 
 type dictionaryRef struct {
