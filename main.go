@@ -28,7 +28,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer data.Close()
+	defer kanjiFile.Close()
 
 	kanji, err := parser.LoadKanjiDic2(kanjiFile)
 	if err != nil {
