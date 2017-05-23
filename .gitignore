@@ -24,7 +24,6 @@ _testmain.go
 *.prof
 
 #project
-data/*.xml
-data/JMdict_e
-data/JMdict
-data/edict2u
+data/*
+!data/test-entry.xml
+!data/test-kanji.xml
