@@ -49,11 +49,11 @@ type kele struct {
 	KeInf []string `xml:"ke_inf"`
 
 	//This and the equivalent re_pri field are provided to record
-	//information about the relative priority of the entry,  and consist
+	//information about the relative priority of the entry, and consist
 	//of codes indicating the word appears in various references which
 	//can be taken as an indication of the frequency with which the word
 	//is used. This field is intended for use either by applications which
-	//want to concentrate on entries of  a particular priority, or to
+	//want to concentrate on entries of a particular priority, or to
 	//generate subset files.
 	//The current values in this field are:
 	//- news1/2: appears in the "wordfreq" file compiled by Alexandre Girardi
@@ -181,7 +181,12 @@ type sense struct {
 	//than English, the language is indicated by the xml:lang attribute.
 	//The element value (if any) is the source word or phrase.
 	//<!ELEMENT lsource (#PCDATA)>
-	Lsource []string `xml:"lsource"`
+	Lsource []struct {
+		Value string `xml:",chardata"`
+		Lang  string `xml:"lang,attr"`
+		Type  string `xml:"ls_type,attr"`
+		Wasei string `xml:"ls_wasei,attr"`
+	} `xml:"lsource"`
 
 	//For words specifically associated with regional dialects in
 	//Japanese, the entity code for that dialect, e.g. ksb for Kansaiben.
@@ -193,5 +198,9 @@ type sense struct {
 	//Japanese word. This element would normally be present, however it
 	//may be omitted in entries which are purely for a cross-reference.
 	//<!ELEMENT gloss (#PCDATA | pri)*>
-	Gloss []string `xml:"gloss"`
+	Gloss []struct {
+		Value  string `xml:",chardata"`
+		Lang   string `xml:"lang,attr"`
+		Gender string `xml:"g_gend,attr"`
+	} `xml:"gloss"`
 }
