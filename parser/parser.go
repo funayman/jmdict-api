@@ -12,10 +12,7 @@ import (
 
 //LoadJMDict file and unmarshal all Entries
 func LoadJMDict(f io.Reader) (words []*entries.Entry, err error) {
-	d, err := ioutil.ReadAll(f)
-	if err != nil {
-		return
-	}
+	d, _ := ioutil.ReadAll(f)
 
 	//needed to fix issue
 	//https://groups.google.com/forum/#!topic/golang-nuts/yF9RM9rnkYc
@@ -54,8 +51,8 @@ func LoadJMDict(f io.Reader) (words []*entries.Entry, err error) {
 		case xml.StartElement:
 			if se.Name.Local == "entry" {
 				var e *entries.Entry
-				err := decoder.DecodeElement(&e, &se)
-				if err != nil {
+
+				if err = decoder.DecodeElement(&e, &se); err != nil {
 					return nil, err
 				}
 				words = append(words, e)
@@ -81,8 +78,7 @@ func LoadKanjiDic2(data io.Reader) (characters []*entries.Kanji, err error) {
 		case xml.StartElement:
 			if se.Name.Local == "character" {
 				var c *entries.Kanji
-				err = xd.DecodeElement(&c, &se)
-				if err != nil {
+				if err = xd.DecodeElement(&c, &se); err != nil {
 					return
 				}
 				characters = append(characters, c)
