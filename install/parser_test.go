@@ -1,4 +1,4 @@
-package parser
+package install
 
 import (
 	"io"
@@ -69,6 +69,10 @@ func TestLoadJMDictFile(t *testing.T) {
 
 	if len(words) != 1 {
 		t.Errorf("Length of 'words' is %d expected 1", len(words))
+	}
+
+	if words[0].Sense[0].Gloss[1].Lang != "fr" {
+		t.Errorf("Not FR: %+v", words[0].Sense[0].Gloss[1])
 	}
 }
 

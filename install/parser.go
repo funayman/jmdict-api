@@ -1,4 +1,4 @@
-package parser
+package install
 
 import (
 	"bytes"
@@ -6,12 +6,10 @@ import (
 	"io"
 	"io/ioutil"
 	"regexp"
-
-	"github.com/funayman/jmdict-api/entries"
 )
 
 //LoadJMDict file and unmarshal all Entries
-func LoadJMDict(f io.Reader) (words []*entries.Entry, err error) {
+func LoadJMDict(f io.Reader) (words []*Entry, err error) {
 	d, _ := ioutil.ReadAll(f)
 
 	//needed to fix issue
@@ -50,7 +48,7 @@ func LoadJMDict(f io.Reader) (words []*entries.Entry, err error) {
 		switch se := t.(type) {
 		case xml.StartElement:
 			if se.Name.Local == "entry" {
-				var e *entries.Entry
+				var e *Entry
 
 				if err = decoder.DecodeElement(&e, &se); err != nil {
 					return nil, err
@@ -66,7 +64,7 @@ func LoadJMDict(f io.Reader) (words []*entries.Entry, err error) {
 }
 
 //LoadKanjiDic2 and return all Kanji
-func LoadKanjiDic2(data io.Reader) (characters []*entries.Kanji, err error) {
+func LoadKanjiDic2(data io.Reader) (characters []*Kanji, err error) {
 	xd := xml.NewDecoder(data)
 	for {
 		t, _ := xd.Token()
@@ -77,7 +75,7 @@ func LoadKanjiDic2(data io.Reader) (characters []*entries.Kanji, err error) {
 		switch se := t.(type) {
 		case xml.StartElement:
 			if se.Name.Local == "character" {
-				var c *entries.Kanji
+				var c *Kanji
 				if err = xd.DecodeElement(&c, &se); err != nil {
 					return
 				}

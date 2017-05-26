@@ -1,5 +1,5 @@
 //Package entries contains structs of elements parsed in the XML files
-package entries
+package install
 
 import "encoding/xml"
 

@@ -2,7 +2,7 @@
 //check out http://www.edrdg.org/jmdict/edict_doc.html
 //for more info on the project
 
-package entries
+package install
 
 import "encoding/xml"
 
