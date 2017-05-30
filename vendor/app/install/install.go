@@ -29,12 +29,36 @@ func JMDict(config Config) error {
 		return err
 	}
 
-	insertIntoDatabase(words)
+	//insert into database
+	insertWordsIntoDatabase(words)
 
 	return nil
 }
 
-func insertIntoDatabase(words []*Entry) {
+//KanjiDic2 reads in the KanjiDic2 file and inserts the data into the database
+func KanjiDic2(config Config) error {
+	//get the file
+	data, err := os.Open(config.KanjiDic2File)
+	if err != nil {
+		return err
+	}
+	defer data.Close()
+
+	//parse data
+	kanji, err := LoadKanjiDic2(data)
+	if err != nil {
+		return err
+	}
+
+	insertKanjiIntoDatabase(kanji)
+
+	return nil
+}
+
+func insertKanjiIntoDatabase(kanji []*Kanji) {
+}
+
+func insertWordsIntoDatabase(words []*Entry) {
 	//open sql file
 	sqlFile, err := os.Open("./sql/sqlite3_install.sql")
 	if err != nil {

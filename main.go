@@ -65,6 +65,12 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		err = install.KanjiDict2(config.Install)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		os.Exit(0)
 	}
 
