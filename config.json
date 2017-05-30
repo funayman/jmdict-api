@@ -1,0 +1,15 @@
+{
+  "database": {
+    "driver": "sqlite3",
+    "connect": "./jdict.db"
+  },
+
+  "installation": {
+    "jmdict": "./data/JMdict_e",
+    "kanjidic2": "./data/kanjidic2.xml"
+  },
+
+  "server": {
+    "port": 3000
+  }
+}

@@ -1,24 +1,23 @@
 package install
 
 import (
-	"database/sql"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
+
+	"app/shared/database"
 )
 
-var (
-	JMDictFile = "./data/JMdict_e"
-	DBDriver   = "sqlite3"
-	DBLoc      = "./test.db"
-)
+type Config struct {
+	JMDictFile    string `json:"jmdict"`
+	KanjiDic2File string `json:"kanjidic2"`
+}
 
-func JMDict() error {
-	//install JMDict to DB
-
+//JMDict reads in the JMdict file and inserts the data into the database
+func JMDict(config Config) error {
 	//get the file
-	data, err := os.Open(JMDictFile)
+	data, err := os.Open(config.JMDictFile)
 	if err != nil {
 		return err
 	}
@@ -30,28 +29,31 @@ func JMDict() error {
 		return err
 	}
 
-	//open database
-	//Open DB
-	db, err := sql.Open("sqlite3", DBLoc)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
+	insertIntoDatabase(words)
 
+	return nil
+}
+
+func insertIntoDatabase(words []*Entry) {
 	//open sql file
-	sqlFile, err := os.Open("./sql/" + DBDriver + "_install.sql")
+	sqlFile, err := os.Open("./sql/sqlite3_install.sql")
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 	defer sqlFile.Close()
 
+	/*******************************************
+	 * CREATE TABLES
+	 ******************************************/
+	//Break up individual queries, Sqlite3 cannot do multi-statements
 	bigAssQuery, _ := ioutil.ReadAll(sqlFile)
 	queries := strings.Split(string(bigAssQuery), ";\n")
-	tx, err := db.Begin()
+	tx, err := database.SQL.Begin()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	//Execute queries
 	for _, query := range queries {
 		_, err := tx.Exec(query)
 		if err != nil {
@@ -61,11 +63,16 @@ func JMDict() error {
 		}
 	}
 
-	//insert into db
+	/*******************************************
+	 * INSERT JMDict to database
+	 ******************************************/
 	for _, word := range words {
-		kanjiReferenceMap := make(map[string]int64) //used for re_restr
+		kanjiReferenceMap := make(map[string]int64) //used for <re_restr> (rstr)
 
-		//enty
+		/*******************************************
+		 * JMDict:    <entry>
+		 * Database:  enty
+		 ******************************************/
 		rslt, err := tx.Exec("INSERT INTO enty (entseq) VALUES (?)", word.EntSeq)
 		if err != nil {
 			log.Printf("Error inserting into ENTY table: %+v\n", word)
@@ -73,7 +80,10 @@ func JMDict() error {
 		}
 		entyID, _ := rslt.LastInsertId()
 
-		//kanj
+		/*******************************************
+		 * JMDict:    <k_ele>
+		 * Database:  kanj
+		 ******************************************/
 		for _, k := range word.KEle {
 			krslt, err := tx.Exec("INSERT INTO kanj (eid, kval) VALUES (?, ?)", entyID, k.Keb)
 			if err != nil {
@@ -90,7 +100,10 @@ func JMDict() error {
 			}
 			kanjiReferenceMap[k.Keb] = kid
 
-			//kinf
+			/*******************************************
+			 * JMDict:    <ke_inf>
+			 * Database:  kinf
+			 ******************************************/
 			for _, ki := range k.KeInf {
 				_, err := tx.Exec("INSERT INTO kinf (kid, kw) VALUES (?, ?)", kid, ki)
 				if err != nil {
@@ -100,20 +113,26 @@ func JMDict() error {
 				}
 			}
 
-			//kpri
+			/*******************************************
+			 * JMDict:    <ke_pri>
+			 * Database:  kpri
+			 ******************************************/
 			for _, kp := range k.KePri {
 				_, err := tx.Exec("INSERT INTO kpri (kid, kw) VALUES (?, ?)", kid, kp)
 				if err != nil {
-					log.Printf("Error inserting into KPRE table: %+v\n", word)
+					log.Printf("Error inserting into KPRI table: %+v\n", word)
 					tx.Rollback()
 					log.Fatal(err)
 				}
 			}
 		}
 
-		//rdng
+		/*******************************************
+		 * JMDict:    <r_ele>
+		 * Database:  rdng
+		 ******************************************/
 		for _, r := range word.Rele {
-			rrslt, err := tx.Exec("INSERT INTO rdng (rval, eid, nokj) VALUES (?, ?, ?)", r.Reb, entyID, r.ReNokanji)
+			rrslt, err := tx.Exec("INSERT INTO rdng (eid, rval, nokj) VALUES (?, ?, ?)", entyID, r.Reb, r.ReNokanji)
 			if err != nil {
 				log.Printf("Error inserting into RDNG table: %+v\n", word)
 				tx.Rollback()
@@ -127,7 +146,10 @@ func JMDict() error {
 				log.Fatal(err)
 			}
 
-			//rstr
+			/*******************************************
+			 * JMDict:    <re_restr>
+			 * Database:  rstr
+			 ******************************************/
 			for _, restriction := range r.ReRestr {
 				kid, ok := kanjiReferenceMap[restriction]
 				if !ok {
@@ -138,7 +160,10 @@ func JMDict() error {
 				tx.Exec("INSERT INTO rstr (kid, rid) VALUES (?, ?)", kid, rid)
 			}
 
-			//rinf
+			/*******************************************
+			 * JMDict:    <re_inf>
+			 * Database:  rinf
+			 ******************************************/
 			for _, ri := range r.ReInf {
 				_, err := tx.Exec("INSERT INTO rinf (rid, kw) VALUES (?, ?)", rid, ri)
 				if err != nil {
@@ -148,20 +173,26 @@ func JMDict() error {
 				}
 			}
 
-			//rpri
+			/*******************************************
+			 * JMDict:    <re_pri>
+			 * Database:  rpri
+			 ******************************************/
 			for _, rp := range r.RePri {
 				_, err := tx.Exec("INSERT INTO rpri (rid, kw) VALUES (?, ?)", rid, rp)
 				if err != nil {
-					log.Printf("Error inserting into RPRE table: %+v\n", word)
+					log.Printf("Error inserting into RPRI table: %+v\n", word)
 					tx.Rollback()
 					log.Fatal(err)
 				}
 			}
 		}
 
-		//sens
+		/*******************************************
+		 * JMDict:    <sense>
+		 * Database:  sens
+		 ******************************************/
 		for _, s := range word.Sense {
-			srslt, err := tx.Exec("INSERT INTO sens (eid) VALUES (?)", word.EntSeq)
+			srslt, err := tx.Exec("INSERT INTO sens (eid) VALUES (?)", entyID)
 			if err != nil {
 				log.Printf("Error inserting into SENS table: %+v\n", word)
 				tx.Rollback()
@@ -176,6 +207,10 @@ func JMDict() error {
 			}
 
 			//stagk
+			/*******************************************
+			 * JMDict:    <stagk>
+			 * Database:  stagk
+			 ******************************************/
 			for _, stagk := range s.Stagk {
 				_, err := tx.Exec("INSERT INTO stagk (sid, kval) VALUES (?, ?)", sid, stagk)
 				if err != nil {
@@ -185,7 +220,10 @@ func JMDict() error {
 				}
 			}
 
-			//stagr
+			/*******************************************
+			 * JMDict:    <stagr>
+			 * Database:  stagr
+			 ******************************************/
 			for _, stagr := range s.Stagr {
 				_, err := tx.Exec("INSERT INTO stagr (sid, rdng) VALUES (?, ?)", sid, stagr)
 				if err != nil {
@@ -195,7 +233,10 @@ func JMDict() error {
 				}
 			}
 
-			//pos
+			/*******************************************
+			 * JMDict:    <pos>
+			 * Database:  pos
+			 ******************************************/
 			for _, pos := range s.Pos {
 				_, err := tx.Exec("INSERT INTO pos (sid, kw) VALUES (?, ?)", sid, pos)
 				if err != nil {
@@ -205,7 +246,10 @@ func JMDict() error {
 				}
 			}
 
-			//xref
+			/*******************************************
+			 * JMDict:    <xref>
+			 * Database:  xref
+			 ******************************************/
 			for _, xref := range s.Xref {
 				// TODO: Fix this issue later
 				//split on the "center-dot" char and store only the keb/reb
@@ -219,7 +263,10 @@ func JMDict() error {
 				}
 			}
 
-			//ant
+			/*******************************************
+			 * JMDict:    <ant>
+			 * Database:  ant
+			 ******************************************/
 			for _, ant := range s.Ant {
 				_, err := tx.Exec("INSERT INTO ant (sid, rdng) VALUES (?, ?)", sid, ant)
 				if err != nil {
@@ -229,7 +276,10 @@ func JMDict() error {
 				}
 			}
 
-			//field
+			/*******************************************
+			 * JMDict:    <field>
+			 * Database:  field
+			 ******************************************/
 			for _, field := range s.Field {
 				_, err := tx.Exec("INSERT INTO field (sid, ctg) VALUES (?, ?)", sid, field)
 				if err != nil {
@@ -239,7 +289,10 @@ func JMDict() error {
 				}
 			}
 
-			//misc
+			/*******************************************
+			 * JMDict:    <misc>
+			 * Database:  misc
+			 ******************************************/
 			for _, misc := range s.Misc {
 				_, err := tx.Exec("INSERT INTO misc (sid, text) VALUES (?, ?)", sid, misc)
 				if err != nil {
@@ -249,7 +302,10 @@ func JMDict() error {
 				}
 			}
 
-			//sinf
+			/*******************************************
+			 * JMDict:    <s_inf>
+			 * Database:  sinf
+			 ******************************************/
 			for _, sinf := range s.SInf {
 				_, err := tx.Exec("INSERT INTO sinf (sid, text) VALUES (?, ?)", sid, sinf)
 				if err != nil {
@@ -259,7 +315,10 @@ func JMDict() error {
 				}
 			}
 
-			//lsource
+			/*******************************************
+			 * JMDict:    <lsource>
+			 * Database:  lsource
+			 ******************************************/
 			for _, lsource := range s.Lsource {
 				var wasei bool
 				if "y" == lsource.Wasei {
@@ -274,7 +333,10 @@ func JMDict() error {
 				}
 			}
 
-			//dial
+			/*******************************************
+			 * JMDict:    <dial>
+			 * Database:  dial
+			 ******************************************/
 			for _, dial := range s.Dial {
 				_, err := tx.Exec("INSERT INTO dial (sid, ben) VALUES (?, ?)", sid, dial)
 				if err != nil {
@@ -284,7 +346,10 @@ func JMDict() error {
 				}
 			}
 
-			//gloss
+			/*******************************************
+			 * JMDict:    <gloss>
+			 * Database:  gloss
+			 ******************************************/
 			for _, gloss := range s.Gloss {
 				_, err := tx.Exec("INSERT INTO gloss (sid, text, lang, gender) VALUES (?, ?, ?, ?)", sid, gloss.Value, gloss.Lang, gloss.Gender)
 				if err != nil {
@@ -297,6 +362,4 @@ func JMDict() error {
 		}
 	}
 	tx.Commit()
-
-	return nil
 }
