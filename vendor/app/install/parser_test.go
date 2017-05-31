@@ -31,7 +31,7 @@ func TestLoadKanjiDic2(t *testing.T) {
 
 func TestLoadKanjiDic2File(t *testing.T) {
 	//Open Kanji Test Data
-	kanjiFile, err := os.Open("../data/test-kanji.xml")
+	kanjiFile, err := os.Open("../../../data/test-kanji.xml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func TestLoadKanjiDic2File(t *testing.T) {
 }
 
 func TestLoadJMDictFile(t *testing.T) {
-	entryFile, err := os.Open("../data/test-entry.xml")
+	entryFile, err := os.Open("../../../data/test-entry.xml")
 	if err != nil {
 		t.Fatal(err)
 	}

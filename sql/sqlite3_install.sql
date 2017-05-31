@@ -1,3 +1,4 @@
+/* JMDICT */
 DROP TABLE IF EXISTS kinf;
 DROP TABLE IF EXISTS kpri;
 DROP TABLE IF EXISTS audio;
@@ -163,3 +164,103 @@ CREATE INDEX enty_entseq_idx ON enty(entseq);
 CREATE INDEX kanj_id_idx ON kanj(id);
 
 CREATE INDEX rdng_id_idx ON rdng(id);
+
+/* KanjiDic2 */
+DROP TABLE IF EXISTS codepoint;
+DROP TABLE IF EXISTS dictextrainfo;
+DROP TABLE IF EXISTS kdictionary;
+DROP TABLE IF EXISTS meaning;
+DROP TABLE IF EXISTS naori;
+DROP TABLE IF EXISTS querycode;
+DROP TABLE IF EXISTS radical;
+DROP TABLE IF EXISTS radicalName;
+DROP TABLE IF EXISTS reading;
+DROP TABLE IF EXISTS strokecount;
+DROP TABLE IF EXISTS variant;
+DROP TABLE IF EXISTS kcharacter;
+
+CREATE TABLE kcharacter (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  literal VARCHAR NOT NULL UNIQUE,
+  grade INTEGER,
+  frequency INTEGER,
+  jlpt INTEGER
+);
+
+CREATE TABLE codepoint (
+  cid INTEGER REFERENCES kcharacter (id),
+  type VARCHAR,
+  value VARCHAR,
+  PRIMARY KEY (cid,type,value)
+);
+
+CREATE TABLE kdictionary (
+  cid INTEGER REFERENCES kcharacter (id),
+  dicindex VARCHAR,
+  name VARCHAR,
+  PRIMARY KEY (cid,dicindex,name)
+);
+
+CREATE TABLE dictextrainfo (
+  dict VARCHAR REFERENCES kdictionary (name),
+  volume VARCHAR,
+  page VARCHAR
+);
+
+CREATE TABLE meaning (
+  cid INTEGER REFERENCES kcharacter (id),
+  value VARCHAR,
+  lang VARCHAR,
+  insertionOrder INTEGER,
+  PRIMARY KEY (cid,value,lang)
+);
+
+CREATE TABLE naori (
+  cid INTEGER REFERENCES kcharacter (id),
+  value VARCHAR,
+  PRIMARY KEY (cid,value)
+);
+
+CREATE TABLE querycode (
+  cid INTEGER REFERENCES kcharacter (id),
+  code VARCHAR,
+  type VARCHAR,
+  misclass VARCHAR,
+  PRIMARY KEY (cid,code,type)
+);
+
+CREATE TABLE radical (
+  cid INTEGER REFERENCES kcharacter (id),
+  type VARCHAR,
+  value VARCHAR,
+  PRIMARY KEY (cid,type,value)
+);
+
+CREATE TABLE radicalName (
+  cid INTEGER REFERENCES kcharacter (id),
+  name VARCHAR
+);
+
+CREATE TABLE reading (
+  cid INTEGER REFERENCES kcharacter (id),
+  value VARCHAR,
+  type VARCHAR,
+  status VARCHAR,
+  ontype VARCHAR,
+  PRIMARY KEY (cid,value,type)
+);
+
+CREATE TABLE strokecount (
+  cid INTEGER REFERENCES kcharacter (id),
+  count INTEGER,
+  "default" INTEGER
+);
+
+CREATE TABLE variant (
+  cid INTEGER REFERENCES kcharacter (id),
+  type VARCHAR,
+  value CHAR,
+  PRIMARY KEY (cid,type,value)
+);
+
+CREATE INDEX kcharacter_literal_idx ON kcharacter(literal);

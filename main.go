@@ -9,10 +9,10 @@ import (
 	"os"
 	"runtime"
 
+	"app/install"
 	"app/shared/database"
 	"app/shared/server"
 
-	"github.com/funayman/jmdict-api/install"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -61,12 +61,14 @@ func main() {
 
 	//Check if were installing database
 	if *installFlag {
+		log.Println("Installing JMDict...")
 		err := install.JMDict(config.Install)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		err = install.KanjiDict2(config.Install)
+		log.Println("Installing KanjiDic2...")
+		err = install.KanjiDic2(config.Install)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -87,21 +89,4 @@ func main() {
 	})
 
 	server.Start(r, config.Server)
-
-	/*
-		//kanjidic2
-		kanjiFile, err := os.Open("./data/kanjidic2.xml")
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer kanjiFile.Close()
-
-		kanji, err := install.LoadKanjiDic2(kanjiFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Printf("Len of Kanji: %d\n", len(kanji))
-		fmt.Printf("%+v\n", kanji[100])
-	*/
 }
