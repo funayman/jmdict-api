@@ -12,8 +12,9 @@ import (
 	"strings"
 
 	"app/install"
+	"app/model"
 	"app/shared/database"
-	"app/shared/model"
+	"app/shared/router"
 	"app/shared/server"
 
 	"github.com/gorilla/mux"
@@ -80,12 +81,11 @@ func main() {
 	}
 
 	//Do the other shit
-	r := mux.NewRouter()
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	router.Route("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Welcome to the Japanese Dictionary API\n")
 	})
 
-	r.HandleFunc("/word/{word}", func(w http.ResponseWriter, r *http.Request) {
+	router.Route("/word/{word}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		word := vars["word"]
 		queries := r.URL.Query()
@@ -130,5 +130,5 @@ func main() {
 		fmt.Fprintf(w, "%s\n", output)
 	})
 
-	server.Start(r, config.Server)
+	server.Start(config.Server)
 }

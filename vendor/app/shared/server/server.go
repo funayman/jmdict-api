@@ -1,6 +1,7 @@
 package server
 
 import (
+	"app/shared/router"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,7 +16,7 @@ func (s Server) address() string {
 	return fmt.Sprintf("%s:%d", s.Hostname, s.Port)
 }
 
-func Start(r http.Handler, s Server) {
+func Start(s Server) {
 	log.Println("starting webserver on:" + s.address())
-	http.ListenAndServe(s.address(), r)
+	http.ListenAndServe(s.address(), router.Instance())
 }

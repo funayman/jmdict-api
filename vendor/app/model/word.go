@@ -21,13 +21,12 @@ var (
  ********************/
 
 type Word struct {
-	XMLName      xml.Name   `json:"-" xml:"word"`
-	ID           int        `json:"id" xml:"id"`
-	JmdictEntSeq int        `json:"jmdictEntSeq" xml:"jmdictEntSeq"`
-	Kanji        string     `json:"kanji,omitempty" xml:"kanji,omitempty"`
-	Reading      string     `json:"reading" xml:"reading"`
-	Meanings     []*Meaning `json:"meaning" xml:"meaning"`
-	OtherForms   []string   `json:"otherForms,omitempty" xml:"otherForms>reading,omitempty"`
+	XMLName    xml.Name   `json:"-" xml:"word"`
+	ID         int        `json:"id" xml:"id"`
+	Kanji      string     `json:"kanji,omitempty" xml:"kanji,omitempty"`
+	Reading    string     `json:"reading" xml:"reading"`
+	Meanings   []*Meaning `json:"meaning" xml:"meanings>meaning"`
+	OtherForms []string   `json:"otherForms,omitempty" xml:"otherForms>reading,omitempty"`
 }
 
 type Meaning struct {
