@@ -2,22 +2,17 @@ package main
 
 import (
 	"encoding/json"
-	"encoding/xml"
 	"flag"
-	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"runtime"
-	"strings"
 
+	"app/controller"
 	"app/install"
-	"app/model"
+	"app/route"
 	"app/shared/database"
-	"app/shared/router"
 	"app/shared/server"
 
-	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -80,55 +75,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	//Do the other shit
-	router.Route("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Welcome to the Japanese Dictionary API\n")
-	})
+	// Load the controller routes
+	controller.Load()
 
-	router.Route("/word/{word}", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		word := vars["word"]
-		queries := r.URL.Query()
-		words := []*model.Word{}
-
-		//grab the base ID for the word(s)
-		rows, err := database.SQL.Query(database.QuerySearchForID, word, word, word)
-		defer rows.Close()
-
-		if err != nil {
-			log.Print(err)
-		}
-
-		var id int
-		for rows.Next() {
-			rows.Scan(&id)
-			words = append(words, &model.Word{ID: id})
-		}
-
-		for _, word := range words {
-			err = word.BuildSelf()
-			if err != nil {
-				log.Println(err)
-			}
-		}
-
-		//write the output
-		var output []byte
-		switch f := queries.Get("format"); strings.ToLower(f) {
-		case "xml":
-			output, err = xml.Marshal(words)
-			if err != nil {
-				log.Println(err)
-			}
-		default:
-			output, err = json.Marshal(words)
-			if err != nil {
-				log.Println(err)
-			}
-		}
-
-		fmt.Fprintf(w, "%s\n", output)
-	})
-
-	server.Start(config.Server)
+	server.Start(route.Load(), config.Server)
 }
