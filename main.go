@@ -87,36 +87,22 @@ func main() {
 
 	r.HandleFunc("/word/{word}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		qury := r.URL.Query()
 		word := vars["word"]
+		queries := r.URL.Query()
+		words := []*model.Word{}
 
 		//grab the base ID for the word(s)
-		rows, err := database.SQL.Query(`SELECT enty.id FROM enty
-			LEFT JOIN kanj ON kanj.eid = enty.id
-			INNER JOIN rdng ON rdng.eid = enty.id
-			INNER JOIN sens ON sens.eid = enty.id
-			INNER JOIN gloss ON gloss.sid = sens.id
-			WHERE kanj.kval = ?
-			OR rdng.rval = ?
-			GROUP BY enty.id`, word, word, word)
+		rows, err := database.SQL.Query(database.QuerySearchForID, word, word, word)
+		defer rows.Close()
 
 		if err != nil {
-			log.Println("Search for: "+word, err)
-			fmt.Fprint(w, "{}")
-			return
+			log.Print(err)
 		}
 
 		var id int
-		var words []*model.Word
 		for rows.Next() {
 			rows.Scan(&id)
 			words = append(words, &model.Word{ID: id})
-		}
-
-		if len(words) < 1 {
-			log.Println("Search for: "+word, err)
-			fmt.Fprint(w, "{}")
-			return
 		}
 
 		for _, word := range words {
@@ -128,7 +114,7 @@ func main() {
 
 		//write the output
 		var output []byte
-		switch f := qury.Get("format"); strings.ToLower(f) {
+		switch f := queries.Get("format"); strings.ToLower(f) {
 		case "xml":
 			output, err = xml.Marshal(words)
 			if err != nil {

@@ -2,9 +2,15 @@ package model
 
 import (
 	"app/shared/database"
+	"database/sql"
 	"encoding/xml"
 	"errors"
-	"log"
+	"strings"
+)
+
+var (
+	emptyString      = ""
+	emptyStringArray = []string{}
 )
 
 /********************
@@ -15,11 +21,19 @@ import (
  ********************/
 
 type Word struct {
-	XMLName    xml.Name `json:"-" xml:"word"`
-	ID         int      `json:"id" xml:"id"`
-	Kanji      string   `json:"kanji,omitempty" xml:"kanji,omitempty"`
-	Reading    string   `json:"reading" xml:"reading"`
-	OtherForms []string `json:"otherForms,omitempty" xml:"otherForms>reading,omitempty"`
+	XMLName      xml.Name   `json:"-" xml:"word"`
+	ID           int        `json:"id" xml:"id"`
+	JmdictEntSeq int        `json:"jmdictEntSeq" xml:"jmdictEntSeq"`
+	Kanji        string     `json:"kanji,omitempty" xml:"kanji,omitempty"`
+	Reading      string     `json:"reading" xml:"reading"`
+	Meanings     []*Meaning `json:"meaning" xml:"meaning"`
+	OtherForms   []string   `json:"otherForms,omitempty" xml:"otherForms>reading,omitempty"`
+}
+
+type Meaning struct {
+	Definition   string   `json:"def" xml:"def"`
+	PartOfSpeech []string `json:"pos,omitempty" xml:"pos,omitempty"`
+	Field        []string `json:"ctg,omitempty" xml:"ctg,omitempty"`
 }
 
 func (w *Word) BuildSelf() error {
@@ -28,50 +42,55 @@ func (w *Word) BuildSelf() error {
 		return errors.New("ID cannot be 0")
 	}
 
-	var isFirst bool = true
-
-	//see if there is a kanji for this word
-	var count int
-	err := database.SQL.QueryRow("SELECT COUNT(kanj.kval) FROM kanj WHERE kanj.eid = ?", w.ID).Scan(&count)
-	if err != nil {
-		log.Print(err)
+	//get entrysequence along with kanji and reading elements
+	var kanjis, readings sql.NullString
+	err := database.SQL.QueryRow(database.QueryKanjiAndReading, w.ID, w.ID).Scan(&kanjis, &readings)
+	if err != nil && err != sql.ErrNoRows {
+		return err
 	}
 
-	if count > 0 {
-		//we got a kanji!
-		rows, err := database.SQL.Query("SELECT kanj.kval FROM kanj WHERE kanj.eid = ?", w.ID)
-		if err != nil {
-			log.Print(err)
-		}
+	//if we have more than one kanji or reading, split and assign properly
+	kanjiSlice := splitIntoArray(kanjis.String)
+	readingSlice := splitIntoArray(readings.String)
 
-		//if theres more than one, store the first one as the main reading and others as OtherForms
-		isFirst = true
-		for rows.Next() {
-			if isFirst {
-				rows.Scan(&w.Kanji)
-				isFirst = false
-			} else {
-				var k string
-				rows.Scan(&k)
-				w.OtherForms = append(w.OtherForms, k)
-			}
-		}
-
+	if len(kanjiSlice) > 0 {
+		w.Kanji = kanjiSlice[0]
+		w.OtherForms = append(w.OtherForms, kanjiSlice[1:]...)
 	}
+	w.Reading = readingSlice[0]
+	w.OtherForms = append(w.OtherForms, readingSlice[1:]...)
 
-	//there will always be a reading
-	isFirst = true
-	rows, err := database.SQL.Query("SELECT rdng.rval FROM rdng WHERE rdng.eid = ? ORDER BY rdng.id;", w.ID)
+	//query for meanings
+	rows, err := database.SQL.Query(database.QueryGlossPosField, w.ID, w.ID, w.ID)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+	defer rows.Close()
+
+	//put each meaning into the struct
 	for rows.Next() {
-		if isFirst {
-			rows.Scan(&w.Reading)
-			isFirst = false
-		} else {
-			var r string
-			rows.Scan(&r)
-			w.OtherForms = append(w.OtherForms, r)
+		var def string
+		var pos, ctg sql.NullString
+		err = rows.Scan(&def, &pos, &ctg)
+		if err != nil {
+			return err
 		}
+
+		m := Meaning{
+			Definition:   def,
+			PartOfSpeech: splitIntoArray(pos.String),
+			Field:        splitIntoArray(ctg.String),
+		}
+
+		w.Meanings = append(w.Meanings, &m)
+	}
+	return nil
+}
+
+func splitIntoArray(s string) []string {
+	if s == emptyString {
+		return emptyStringArray
 	}
 
-	return nil
+	return strings.Split(s, database.ResultDelimeter)
 }
