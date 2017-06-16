@@ -3,9 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
@@ -13,6 +11,7 @@ import (
 
 	"app/model"
 	"app/shared/database"
+	"app/shared/logger"
 	"app/shared/router"
 )
 
@@ -33,7 +32,7 @@ func GetWordsByChar(w http.ResponseWriter, r *http.Request) {
 	//grab the base ID for the word(s)
 	rows, err := database.SQL.Query(database.QuerySearchForID, q, q, q)
 	if err != nil {
-		log.Print(err)
+		logger.Error(err)
 		writeToWriter(w, words, format)
 	}
 	defer rows.Close()
@@ -47,7 +46,7 @@ func GetWordsByChar(w http.ResponseWriter, r *http.Request) {
 	for _, word := range words {
 		err = word.BuildSelf()
 		if err != nil {
-			log.Println(err)
+			logger.Error(err)
 		}
 	}
 
@@ -55,21 +54,18 @@ func GetWordsByChar(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeToWriter(w io.Writer, data interface{}, format string) {
-	var output []byte
 	var err error
 
 	switch strings.ToLower(format) {
 	case "xml":
-		output, err = xml.Marshal(data)
+		err = xml.NewEncoder(w).Encode(data)
 		if err != nil {
-			log.Println(err)
+			logger.Error(err)
 		}
 	default:
-		output, err = json.Marshal(data)
+		err = json.NewEncoder(w).Encode(data)
 		if err != nil {
-			log.Println(err)
+			logger.Error(err)
 		}
 	}
-
-	fmt.Fprintf(w, "%s\n", output)
 }

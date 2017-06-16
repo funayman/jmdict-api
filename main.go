@@ -11,6 +11,7 @@ import (
 	"app/install"
 	"app/route"
 	"app/shared/database"
+	"app/shared/logger"
 	"app/shared/server"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -47,15 +48,18 @@ func init() {
 }
 
 func main() {
+	//Start my logger
+	logger.Load(logger.LInfo)
+
 	//Get user input
 	flag.Parse()
 
 	//Load config
-	log.Println("Loading config: " + *configFlag)
+	logger.Info("Loading config: " + *configFlag)
 	config.Load(*configFlag)
 
 	//Connect to database
-	log.Println("Connecting to database...")
+	logger.Info("Connecting to database...")
 	database.Connect(config.Database)
 
 	//Check if were installing database
@@ -75,8 +79,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Load the controller routes
+	//Load the controller routes
+	logger.Info("Loading controllers...")
 	controller.Load()
 
+	//Load all routes and middleware and start the server
+	logger.Info("Starting web server...")
 	server.Start(route.Load(), config.Server)
 }

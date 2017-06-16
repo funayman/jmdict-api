@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"app/shared/router"
-	"fmt"
 	"net/http"
+
+	"app/shared/router"
 )
 
 func init() {
@@ -11,5 +11,5 @@ func init() {
 }
 
 func IndexFunc(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Welcome to the Japanese Dictionary API\n")
+	w.Write([]byte("Welcome to the Japanese Dictionary API\n"))
 }

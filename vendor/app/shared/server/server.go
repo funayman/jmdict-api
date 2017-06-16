@@ -2,8 +2,9 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+
+	"app/shared/logger"
 )
 
 type Server struct {
@@ -16,6 +17,6 @@ func (s Server) address() string {
 }
 
 func Start(r http.Handler, s Server) {
-	log.Println("starting webserver on:" + s.address())
+	logger.Info("webserver started on: " + s.address())
 	http.ListenAndServe(s.address(), r)
 }

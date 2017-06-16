@@ -1,8 +1,10 @@
 package route
 
 import (
-	"app/shared/router"
 	"net/http"
+
+	"app/route/middleware/logrequest"
+	"app/shared/router"
 )
 
 func Load() http.Handler {
@@ -10,5 +12,7 @@ func Load() http.Handler {
 }
 
 func middleware(h http.Handler) http.Handler {
+	h = logrequest.Handler(h)
+
 	return h
 }

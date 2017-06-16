@@ -2,7 +2,8 @@ package database
 
 import (
 	"database/sql"
-	"log"
+
+	"app/shared/logger"
 )
 
 const (
@@ -45,11 +46,11 @@ func Connect(info Setup) {
 	var err error
 	SQL, err = sql.Open(info.Driver, info.Connection)
 	if err != nil {
-		log.Fatal("SQL Open error: ", err)
+		logger.Fatal("SQL Open error: ", err)
 	}
 
 	//we good?
 	if err = SQL.Ping(); err != nil {
-		log.Fatal("Database connection error: ", err)
+		logger.Fatal("Database connection error: ", err)
 	}
 }
