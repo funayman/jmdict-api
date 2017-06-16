@@ -18,5 +18,5 @@ func (s Server) address() string {
 
 func Start(r http.Handler, s Server) {
 	logger.Info("webserver started on: " + s.address())
-	http.ListenAndServe(s.address(), r)
+	logger.Fatal(http.ListenAndServe(s.address(), r))
 }
