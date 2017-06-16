@@ -27,3 +27,4 @@ _testmain.go
 data/*
 !data/test-entry.xml
 !data/test-kanji.xml
+jdict.db
