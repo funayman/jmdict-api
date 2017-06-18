@@ -1,13 +1,7 @@
 package controller
 
 import (
-	"encoding/json"
-	"encoding/xml"
-	"io"
 	"net/http"
-	"strings"
-
-	"github.com/gorilla/mux"
 
 	"app/model"
 	"app/shared/database"
@@ -24,7 +18,7 @@ func init() {
 }
 
 func GetWordsByChar(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+	vars := router.GetParams(r)
 	q := vars["word"]
 	format := r.URL.Query().Get(qFormat)
 	words := []*model.Word{}
@@ -51,21 +45,4 @@ func GetWordsByChar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeToWriter(w, words, format)
-}
-
-func writeToWriter(w io.Writer, data interface{}, format string) {
-	var err error
-
-	switch strings.ToLower(format) {
-	case "xml":
-		err = xml.NewEncoder(w).Encode(data)
-		if err != nil {
-			logger.Error(err)
-		}
-	default:
-		err = json.NewEncoder(w).Encode(data)
-		if err != nil {
-			logger.Error(err)
-		}
-	}
 }

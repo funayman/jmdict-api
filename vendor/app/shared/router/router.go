@@ -31,3 +31,7 @@ func Instance() *mux.Router {
 func Route(path string, fn http.HandlerFunc) {
 	r.HandleFunc(path, fn)
 }
+
+func GetParams(r *http.Request) map[string]string {
+	return mux.Vars(r)
+}
