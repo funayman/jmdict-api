@@ -1,12 +1,11 @@
-//logger is a wrapper for the log.Logger
-//used for
+//Package logger is a wrapper for the log.Logger
 package logger
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 )
 
 const (
@@ -18,24 +17,28 @@ const (
 
 var (
 	l Roga
-
-	Level logLevel
 )
 
 type logLevel int
+
+type Config struct {
+	Level string `json:"level"`
+}
 
 type Roga struct {
 	Error *log.Logger
 	Info  *log.Logger
 	Debug *log.Logger
 	Fatal *log.Logger
+
+	Level logLevel
 }
 
-func Load(level logLevel) {
-	Level = level
+func Load(c Config) {
+	l.Level = getLevel(c.Level)
 	l.Error = log.New(os.Stderr, "[ERROR] ", log.Ldate|log.Ltime|log.Lshortfile)
 	l.Info = log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime)
-	l.Debug = log.New(ioutil.Discard, "[DEBUG] ", log.Ldate|log.Ltime|log.Lshortfile)
+	l.Debug = log.New(os.Stdout, "[DEBUG] ", log.Ldate|log.Ltime|log.Lshortfile)
 	l.Fatal = log.New(os.Stdout, "[FATAL] ", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
@@ -48,19 +51,27 @@ func Errorf(f string, v ...interface{}) {
 }
 
 func Info(v ...interface{}) {
-	l.Info.Output(2, fmt.Sprint(v...))
+	if l.Level >= LInfo {
+		l.Info.Output(2, fmt.Sprint(v...))
+	}
 }
 
 func Infof(f string, v ...interface{}) {
-	l.Info.Output(2, fmt.Sprintf(f, v...))
+	if l.Level >= LInfo {
+		l.Info.Output(2, fmt.Sprintf(f, v...))
+	}
 }
 
 func Debug(v ...interface{}) {
-	l.Debug.Output(2, fmt.Sprint(v...))
+	if l.Level >= LDebug {
+		l.Debug.Output(2, fmt.Sprint(v...))
+	}
 }
 
 func Debugf(f string, v ...interface{}) {
-	l.Debug.Output(2, fmt.Sprintf(f, v...))
+	if l.Level >= LDebug {
+		l.Debug.Output(2, fmt.Sprintf(f, v...))
+	}
 }
 
 func Fatal(v ...interface{}) {
@@ -71,4 +82,15 @@ func Fatal(v ...interface{}) {
 func Fatalf(f string, v ...interface{}) {
 	l.Fatal.Output(2, fmt.Sprintf(f, v...))
 	os.Exit(1)
+}
+
+func getLevel(level string) logLevel {
+	switch strings.ToLower(level) {
+	case "debug":
+		return LDebug
+	case "error":
+		return LError
+	default:
+		return LInfo
+	}
 }

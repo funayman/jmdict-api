@@ -27,18 +27,19 @@ type configuration struct {
 	Database database.Setup `json:"database"`
 	Install  install.Config `json:"installation"`
 	Server   server.Server  `json:"server"`
+	Log      logger.Config  `json:"logger"`
 }
 
 func (c *configuration) Load(configPath string) {
 	configFile, err := os.Open(configPath)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer configFile.Close()
 
 	err = json.NewDecoder(configFile).Decode(c)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
 
@@ -48,15 +49,14 @@ func init() {
 }
 
 func main() {
-	//Start my logger
-	logger.Load(logger.LInfo)
-
 	//Get user input
 	flag.Parse()
 
 	//Load config
-	logger.Info("Loading config: " + *configFlag)
 	config.Load(*configFlag)
+
+	//Start my logger
+	logger.Load(config.Log)
 
 	//Connect to database
 	logger.Info("Connecting to database...")
