@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"log"
 	"os"
 	"runtime"
 
@@ -64,16 +63,16 @@ func main() {
 
 	//Check if were installing database
 	if *installFlag {
-		log.Println("Installing JMDict...")
+		logger.Info("Installing JMDict...")
 		err := install.JMDict(config.Install)
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
-		log.Println("Installing KanjiDic2...")
+		logger.Info("Installing KanjiDic2...")
 		err = install.KanjiDic2(config.Install)
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		os.Exit(0)
