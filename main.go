@@ -85,4 +85,19 @@ func main() {
 	//Load all routes and middleware and start the server
 	logger.Info("Starting web server...")
 	server.Start(route.Load(), config.Server)
+
+	//TODO cleanup on signal intterup
+	/*
+		signalChan := make(chan os.Signal, 1)
+		cleanupDone := make(chan bool)
+		signal.Notify(signalChan, os.Interrupt)
+		go func() {
+			for _ = range signalChan {
+				logger.Info("Received an interrupt, stopping services...")
+				logger.Close()
+				cleanupDone <- true
+			}
+		}()
+		<-cleanupDone
+	*/
 }

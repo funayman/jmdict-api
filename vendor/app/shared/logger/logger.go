@@ -22,6 +22,8 @@ var (
 
 	defaultWriter io.Writer
 	errorWriter   io.Writer
+
+	logFile *os.File
 )
 
 type logLevel int
@@ -105,6 +107,17 @@ func Fatalf(f string, v ...interface{}) {
 	l.Fatal.Output(2, fmt.Sprintf(f, v...))
 	os.Exit(1)
 }
+
+/*
+func Close() {
+	if logFile != nil {
+		err := logFile.Close()
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+*/
 
 func getLevel(level string) logLevel {
 	switch strings.ToLower(level) {
