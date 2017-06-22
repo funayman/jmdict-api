@@ -3,6 +3,7 @@ package logger
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -18,12 +19,16 @@ const (
 
 var (
 	l Roga
+
+	defaultWriter io.Writer
+	errorWriter   io.Writer
 )
 
 type logLevel int
 
 type Config struct {
 	Level string `json:"level"`
+	File  string `json:"file"`
 }
 
 type Roga struct {
@@ -36,11 +41,23 @@ type Roga struct {
 }
 
 func Load(c Config) {
+	//open file if there is one
+	if file, err := os.OpenFile(c.File, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); err == nil {
+		defaultWriter = io.MultiWriter(os.Stdout, file)
+		errorWriter = io.MultiWriter(os.Stderr, file)
+	} else {
+		defaultWriter = os.Stdout
+		errorWriter = os.Stderr
+	}
+
+	//grab the loglevel from config (LInfo is default)
 	l.Level = getLevel(c.Level)
-	l.Debug = log.New(os.Stdout, "[DEBUG] ", log.Ldate|log.Ltime|log.Lshortfile)
-	l.Info = log.New(os.Stdout, "[INFO] ", log.Ldate|log.Ltime)
-	l.Error = log.New(os.Stderr, "[ERROR] ", log.Ldate|log.Ltime|log.Lshortfile)
-	l.Fatal = log.New(os.Stdout, "[FATAL] ", log.Ldate|log.Ltime|log.Lshortfile)
+
+	//setup all the loggers
+	l.Debug = log.New(defaultWriter, "[DEBUG] ", log.Ldate|log.Ltime|log.Lshortfile)
+	l.Info = log.New(defaultWriter, "[INFO] ", log.Ldate|log.Ltime)
+	l.Error = log.New(errorWriter, "[ERROR] ", log.Ldate|log.Ltime|log.Lshortfile)
+	l.Fatal = log.New(errorWriter, "[FATAL] ", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
 func Error(v ...interface{}) {
