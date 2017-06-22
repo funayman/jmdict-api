@@ -324,14 +324,3 @@ SELECT f.sid AS "senseid", group_concat(f.ctg, "; ") AS "ctg"
 FROM field f
 INNER JOIN sens s ON f.sid = s.id
 GROUP BY s.id;
-
-DROP VIEW IF EXISTS "vfullentry";
-CREATE VIEW "vfullentry" AS
-SELECT e.id, e.entseq, vk.kanjis, vr.readings, g.gloss, p.pos, f.ctg
-FROM enty e
-LEFT JOIN vkanjicc vk ON vk.entyid = e.id
-INNER JOIN vreadingcc vr ON vr.entyid = e.id
-INNER JOIN sens s ON s.eid = e.id
-INNER JOIN vglosscc g ON g.senseid = s.id
-LEFT JOIN vposcc p ON p.senseid = s.id
-LEFT JOIN vfieldcc f ON f.senseid = s.id;
