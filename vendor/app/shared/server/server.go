@@ -7,18 +7,37 @@ import (
 	"app/shared/logger"
 )
 
+var (
+	server *http.Server
+)
+
 type Server struct {
-	Hostname string `json:"hostname"`
-	Port     int    `json:"port"`
+	Addr string `json:"host"`
+	Port int    `json:"port"`
 }
 
 func (s Server) address() string {
-	return fmt.Sprintf("%s:%d", s.Hostname, s.Port)
+	return fmt.Sprintf("%s:%d", s.Addr, s.Port)
 }
 
-//TODO graceful startup and shutdown (go 1.8 server.Shutdown())
-
 func Start(r http.Handler, s Server) {
+	//set up our server
+	server = &http.Server{Addr: s.address(), Handler: r}
+
+	//start the webserver in its own go routine so it doesnt block main
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			logger.Fatal(err)
+		}
+	}()
+
+	//server started, log away
 	logger.Info("webserver started on: " + s.address())
-	logger.Fatal(http.ListenAndServe(s.address(), r))
+}
+
+func Shutdown() {
+	logger.Info("shutting down web server...")
+	if err := server.Shutdown(nil); err != nil {
+		logger.Fatal(err)
+	}
 }

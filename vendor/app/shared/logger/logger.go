@@ -23,7 +23,7 @@ var (
 	defaultWriter io.Writer
 	errorWriter   io.Writer
 
-	logFile *os.File
+	logFile *os.File = nil
 )
 
 type logLevel int
@@ -45,8 +45,9 @@ type Roga struct {
 func Load(c Config) {
 	//open file if there is one
 	if file, err := os.OpenFile(c.File, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); err == nil {
-		defaultWriter = io.MultiWriter(os.Stdout, file)
-		errorWriter = io.MultiWriter(os.Stderr, file)
+		logFile = file
+		defaultWriter = io.MultiWriter(os.Stdout, logFile)
+		errorWriter = io.MultiWriter(os.Stderr, logFile)
 	} else {
 		defaultWriter = os.Stdout
 		errorWriter = os.Stderr
@@ -108,16 +109,16 @@ func Fatalf(f string, v ...interface{}) {
 	os.Exit(1)
 }
 
-/*
 func Close() {
+	//check if we have a log file
 	if logFile != nil {
-		err := logFile.Close()
-		if err != nil {
+		l.Info.Output(1, "closing logfile...")
+		//attempt to close the logfile
+		if err := logFile.Close(); err != nil {
 			panic(err)
 		}
 	}
 }
-*/
 
 func getLevel(level string) logLevel {
 	switch strings.ToLower(level) {

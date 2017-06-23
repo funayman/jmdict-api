@@ -54,3 +54,10 @@ func Connect(info Setup) {
 		logger.Fatal("Database connection error: ", err)
 	}
 }
+
+func Close() {
+	logger.Info("closing database connection...")
+	if err := SQL.Close(); err != nil {
+		logger.Fatal(err)
+	}
+}
